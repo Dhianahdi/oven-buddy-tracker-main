@@ -103,3 +103,25 @@ export async function deleteReservation(id: string): Promise<void> {
   const { error } = await supabase.from("reservations").delete().eq("id", id);
   if (error) throw error;
 }
+
+export type StatsOperation = {
+  id: string;
+  oven_id: string;
+  date_debut: string;
+  heure_debut: string;
+  date_fin: string | null;
+  heure_fin: string | null;
+  status: "active" | "completed";
+  ended_at: string | null;
+  created_at: string;
+  oven: { id: string; internal_number: string; serial_number: string };
+};
+
+export async function fetchStats(): Promise<StatsOperation[]> {
+  const { data, error } = await supabase
+    .from("operations")
+    .select("id, oven_id, date_debut, heure_debut, date_fin, heure_fin, status, ended_at, created_at, oven:ovens(id, internal_number, serial_number)")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as any;
+}
