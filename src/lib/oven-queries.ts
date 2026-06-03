@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { cacheData, getCachedData, isOnline } from "./offline-db";
 
 export type Oven = {
   id: string;
@@ -31,7 +32,25 @@ export type Operation = {
 
 export type OvenWithActive = Oven & { active: Operation | null };
 
+export type Reservation = {
+  id: string;
+  oven_id: string;
+  demandeur: string;
+  projet: string | null;
+  date_debut: string;
+  heure_debut: string;
+  date_fin: string;
+  heure_fin: string;
+  notes: string | null;
+  created_at: string;
+};
+
+export type ReservationWithOven = Reservation & { oven: Oven };
+
 export async function fetchOvensWithActive(): Promise<OvenWithActive[]> {
+  if (!isOnline()) {
+    return getCachedData<OvenWithActive>("ovens");
+  }
   const [{ data: ovens, error: oErr }, { data: ops, error: opErr }] = await Promise.all([
     supabase.from("ovens").select("*").order("position", { ascending: true }),
     supabase.from("operations").select("*").eq("status", "active"),
@@ -40,15 +59,47 @@ export async function fetchOvensWithActive(): Promise<OvenWithActive[]> {
   if (opErr) throw opErr;
   const byOven = new Map<string, Operation>();
   (ops ?? []).forEach((o) => byOven.set(o.oven_id, o as Operation));
-  return (ovens ?? []).map((o) => ({ ...(o as Oven), active: byOven.get(o.id) ?? null }));
+  const result = (ovens ?? []).map((o) => ({ ...(o as Oven), active: byOven.get(o.id) ?? null }));
+  cacheData("ovens", result).catch(() => {});
+  return result;
 }
 
 export async function fetchHistory(): Promise<(Operation & { oven: Oven })[]> {
+  if (!isOnline()) {
+    return getCachedData<Operation & { oven: Oven }>("history");
+  }
   const { data, error } = await supabase
     .from("operations")
     .select("*, oven:ovens(*)")
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
-  return (data ?? []) as any;
+  const result = (data ?? []) as any;
+  cacheData("history", result).catch(() => {});
+  return result;
+}
+
+export async function fetchReservations(): Promise<ReservationWithOven[]> {
+  if (!isOnline()) {
+    return getCachedData<ReservationWithOven>("reservations");
+  }
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*, oven:ovens(*)")
+    .order("date_debut", { ascending: true })
+    .order("heure_debut", { ascending: true });
+  if (error) throw error;
+  const result = (data ?? []) as any;
+  cacheData("reservations", result).catch(() => {});
+  return result;
+}
+
+export async function createReservation(payload: Omit<Reservation, "id" | "created_at">): Promise<void> {
+  const { error } = await supabase.from("reservations").insert(payload);
+  if (error) throw error;
+}
+
+export async function deleteReservation(id: string): Promise<void> {
+  const { error } = await supabase.from("reservations").delete().eq("id", id);
+  if (error) throw error;
 }

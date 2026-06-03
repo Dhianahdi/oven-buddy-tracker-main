@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PlanificationRouteImport } from './routes/planification'
 import { Route as HistoriqueRouteImport } from './routes/historique'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PlanificationRoute = PlanificationRouteImport.update({
+  id: '/planification',
+  path: '/planification',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoriqueRoute = HistoriqueRouteImport.update({
   id: '/historique',
   path: '/historique',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/historique': typeof HistoriqueRoute
+  '/planification': typeof PlanificationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/historique': typeof HistoriqueRoute
+  '/planification': typeof PlanificationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/historique': typeof HistoriqueRoute
+  '/planification': typeof PlanificationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/historique'
+  fullPaths: '/' | '/admin' | '/historique' | '/planification'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/historique'
-  id: '__root__' | '/' | '/admin' | '/historique'
+  to: '/' | '/admin' | '/historique' | '/planification'
+  id: '__root__' | '/' | '/admin' | '/historique' | '/planification'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   HistoriqueRoute: typeof HistoriqueRoute
+  PlanificationRoute: typeof PlanificationRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/planification': {
+      id: '/planification'
+      path: '/planification'
+      fullPath: '/planification'
+      preLoaderRoute: typeof PlanificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/historique': {
       id: '/historique'
       path: '/historique'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   HistoriqueRoute: HistoriqueRoute,
+  PlanificationRoute: PlanificationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

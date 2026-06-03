@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -9,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, useTheme } from "@/lib/theme";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 
 import appCss from "../styles.css?url";
 
@@ -138,6 +140,13 @@ function Header() {
               <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           }/>
+          <NavLink to="/planification" label="Planning" icon={
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round"/>
+              <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          }/>
           <NavLink to="/admin" label="Admin" icon={
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
@@ -185,6 +194,52 @@ function NavLink({ to, label, icon, exact }: { to: string; label: string; icon: 
   );
 }
 
+function OfflineBanner() {
+  const { online, syncing, pendingCount } = useOfflineSync();
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
+  if (online && pendingCount === 0) return null;
+
+  return (
+    <div className={`flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium ${
+      online
+        ? "bg-warning/15 text-warning border-b border-warning/20"
+        : "bg-destructive/10 text-destructive border-b border-destructive/20"
+    }`}>
+      {online ? (
+        syncing ? (
+          <>
+            <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+            Synchronisation en cours…
+          </>
+        ) : (
+          <>
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+            </svg>
+            {pendingCount} action{pendingCount > 1 ? "s" : ""} en attente de synchronisation
+          </>
+        )
+      ) : (
+        <>
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 0 1 0 12.728m-3.536-3.536a4 4 0 0 1 0-5.656M9.172 9.172a4 4 0 0 0 0 5.656M5.636 5.636a9 9 0 0 0 0 12.728M12 12v.01"/>
+          </svg>
+          Mode hors-ligne · les données affichées sont en cache local
+        </>
+      )}
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
@@ -192,6 +247,7 @@ function RootComponent() {
       <ThemeProvider>
         <div className="min-h-screen flex flex-col bg-background">
           <Header />
+          <OfflineBanner />
           <main className="flex-1">
             <Outlet />
           </main>
