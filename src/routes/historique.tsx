@@ -3,6 +3,10 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchHistory } from "@/lib/oven-queries";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 20;
 
 export const Route = createFileRoute("/historique")({
   component: HistoryPage,
@@ -18,6 +22,7 @@ function HistoryPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all");
+  const [page, setPage] = useState(1);
 
   const counts = useMemo(() => ({
     total: data?.length ?? 0,
@@ -41,6 +46,10 @@ function HistoryPage() {
     return arr;
   }, [data, search, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       {/* Header */}
@@ -63,7 +72,7 @@ function HistoryPage() {
           {(["all", "active", "completed"] as const).map((s) => (
             <button
               key={s}
-              onClick={() => setStatusFilter(s)}
+              onClick={() => { setStatusFilter(s); setPage(1); }}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
                 statusFilter === s
                   ? s === "active"
@@ -85,7 +94,7 @@ function HistoryPage() {
           <Input
             placeholder="Four, demandeur, projet…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="pl-9 bg-card border-border"
           />
         </div>
@@ -125,7 +134,7 @@ function HistoryPage() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((op, idx) => (
+                paginated.map((op, idx) => (
                   <tr
                     key={op.id}
                     className={`border-b border-border/40 transition-colors hover:bg-secondary/30 ${idx % 2 === 0 ? "" : "bg-secondary/10"}`}
