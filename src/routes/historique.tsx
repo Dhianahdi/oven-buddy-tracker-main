@@ -170,8 +170,52 @@ function HistoryPage() {
           </table>
         </div>
         {!isLoading && filtered.length > 0 && (
-          <div className="border-t border-border/50 px-4 py-2.5 text-xs text-muted-foreground">
-            {filtered.length} opération{filtered.length > 1 ? "s" : ""} affichée{filtered.length > 1 ? "s" : ""}
+          <div className="flex items-center justify-between border-t border-border/50 px-4 py-3">
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} opération{filtered.length > 1 ? "s" : ""} · page {safePage}/{totalPages}
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm" variant="outline"
+                  className="h-8 w-8 p-0 border-border"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                  .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                    if (i > 0 && (p as number) - (arr[i - 1] as number) > 1) acc.push("…");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "…" ? (
+                      <span key={`e-${i}`} className="px-1 text-xs text-muted-foreground">…</span>
+                    ) : (
+                      <Button
+                        key={p}
+                        size="sm"
+                        variant={safePage === p ? "default" : "outline"}
+                        className={`h-8 w-8 p-0 text-xs ${safePage === p ? "glow-primary" : "border-border"}`}
+                        onClick={() => setPage(p as number)}
+                      >
+                        {p}
+                      </Button>
+                    )
+                  )}
+                <Button
+                  size="sm" variant="outline"
+                  className="h-8 w-8 p-0 border-border"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
