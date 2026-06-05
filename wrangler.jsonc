@@ -6,5 +6,12 @@
   "main": "dist/server/server.js",
   "assets": {
     "directory": "dist/client"
+  },
+  // Variables d'environnement pour Cloudflare Workers
+  // En dev local, ces valeurs sont lues depuis .dev.vars (jamais commité)
+  // En production, définissez-les dans le dashboard Cloudflare Workers > Settings > Variables
+  "vars": {
+    "SUPABASE_URL": "https://atncsaamttxnujqkoiuq.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_dm9UoKbnoa0obZ_oJ-kpGQ_RBve3pNt"
   }
 }
